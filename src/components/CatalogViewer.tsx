@@ -95,6 +95,10 @@ export default function CatalogViewer() {
   const [showOverview, setShowOverview] = useState<boolean>(false);
   const isJumpingRef = useRef<boolean>(false);
 
+  // متغیرهای ذخیره لمس انگشت برای حل مشکل ورق نخوردن به عقب در موبایل
+  const touchStartXRef = useRef<number | null>(null);
+  const touchEndXRef = useRef<number | null>(null);
+
   const totalPages = mockLots.length * 2 + 2;
 
   useEffect(() => {
@@ -205,6 +209,32 @@ export default function CatalogViewer() {
   const handleFlipNext = () => bookRef.current?.pageFlip().flipNext();
   const handleFlipPrev = () => bookRef.current?.pageFlip().flipPrev();
 
+  // هندلر لمسی برای ورق زدن دوطرفه با کشیدن انگشت در موبایل
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndXRef.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartXRef.current || !touchEndXRef.current) return;
+    const distance = touchStartXRef.current - touchEndXRef.current;
+
+    // آستانه تشخیص کشش انگشت (۳۵ پیکسل)
+    if (distance > 35) {
+      // کشیدن به چپ -> صفحه بعد
+      handleFlipNext();
+    } else if (distance < -35) {
+      // کشیدن به راست -> صفحه قبل
+      handleFlipPrev();
+    }
+
+    touchStartXRef.current = null;
+    touchEndXRef.current = null;
+  };
+
   const isAtStart = currentPage === 0;
   const isAtEnd = currentPage >= totalPages - 1;
 
@@ -283,10 +313,13 @@ export default function CatalogViewer() {
           <ChevronRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-0.5" />
         </button>
 
-        {/* کادر کتاب */}
+        {/* کادر کتاب با پشتیبانی کامل از لمس و سوایپ دوطرفه */}
         <div
           onClick={(e) => e.stopPropagation()}
-          className="w-auto max-w-[98vw] flex items-center justify-center p-1.5 sm:p-2.5 rounded-2xl bg-white/35 backdrop-blur-md border border-white/60 shadow-2xl overflow-hidden cursor-default shrink-0"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="w-auto max-w-[98vw] flex items-center justify-center p-1.5 sm:p-2.5 rounded-2xl bg-white/35 backdrop-blur-md border border-white/60 shadow-2xl overflow-hidden cursor-default shrink-0 touch-pan-y"
         >
           <div className="flex items-center justify-center">
             <HTMLFlipBook
@@ -465,8 +498,17 @@ export default function CatalogViewer() {
         <div className="flex items-center gap-1 px-1.5 sm:px-2 border-r border-neutral-300 font-mono text-[10px] sm:text-[11px]">
           <input
             type="text"
+            inputMode="numeric"
             value={pageInputValue}
-            onChange={(e) => setPageInputValue(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              // اجازه پاک شدن کامل عدد هنگام زدن Backspace
+              if (val === "") {
+                setPageInputValue("");
+                return;
+              }
+              setPageInputValue(val);
+            }}
             onKeyDown={handleKeyDown}
             onBlur={handlePageJump}
             className="w-12 sm:w-16 text-center bg-stone-100/90 hover:bg-white focus:bg-white text-neutral-900 font-bold py-0.5 rounded border border-stone-300 focus:border-amber-600 focus:outline-none transition-all shadow-inner"
