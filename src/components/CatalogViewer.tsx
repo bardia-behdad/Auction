@@ -307,7 +307,6 @@ export default function CatalogViewer() {
               drawShadow={true}
               showPageCorners={true}
               disableFlipByClick={true}
-              direction="rtl"
               onFlip={(e: { data: number }) => setCurrentPage(e.data)}
               ref={bookRef}
               className="catalog-flipbook"
