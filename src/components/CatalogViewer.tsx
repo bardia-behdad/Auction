@@ -17,6 +17,17 @@ import {
 const BG_IMAGE_URL =
   "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1600";
 
+// تعریف تایپ دقیق برای رفع خطاهای VS Code
+interface OverviewItem {
+  pageNumber: number;
+  title: string;
+  subtitle: string;
+  isCover?: boolean;
+  pageEndNumber?: number;
+  imageUrl?: string;
+  lotNumber?: number;
+}
+
 const Page = React.forwardRef<
   HTMLDivElement,
   { number: number; children: React.ReactNode; isCover?: boolean; isRightPage?: boolean }
@@ -91,13 +102,11 @@ export default function CatalogViewer() {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
 
-      // کسر فضای هدر، نوار بالا و نوار پایین برای محاسبه حداکثر ارتفاع مجاز
       const reservedHeight = isFullscreen ? 110 : 80 + 105;
       const maxPossibleHeight = window.innerHeight - reservedHeight;
 
       if (mobile) {
         const width = Math.min(window.innerWidth - 28, 350);
-        // بدون کف سخت ۳۸۰ یا ۴۰۰؛ متناسب با ارتفاع واقعی صفحه کاهش می‌یابد
         const height = Math.max(260, Math.min(maxPossibleHeight, 490));
         setBookDimensions({ width, height });
       } else {
@@ -199,7 +208,8 @@ export default function CatalogViewer() {
   const isAtStart = currentPage === 0;
   const isAtEnd = currentPage >= totalPages - 1;
 
-  const overviewItems = [
+  // استفاده از اینترفیس تعریف‌شده برای رفع خطای تایپ‌اسکریپت
+  const overviewItems: OverviewItem[] = [
     { pageNumber: 1, title: "جلد آغازین", subtitle: "حراج ملی هنر معاصر", isCover: true },
     ...mockLots.map((lot, index) => ({
       pageNumber: index * 2 + 2,
@@ -248,17 +258,17 @@ export default function CatalogViewer() {
         }`}
       />
 
-      {/* نوار تیتر بالا */}
+      {/* تیتر بالا */}
       <header className="relative z-10 text-center shrink-0 pointer-events-none">
         <h1 className="font-gallery text-[10px] sm:text-xs font-medium tracking-wider text-neutral-900 bg-white/85 backdrop-blur-md px-3 sm:px-4 py-1 rounded-full border border-white/60 shadow-sm pointer-events-none">
           حراج ملی هنر معاصر ایران • دوره ۲۱ {isFullscreen && "• (کلیک در بیرون جهت خروج)"}
         </h1>
       </header>
 
-      {/* کانتینر میانی کاتالوگ با گپ هوشمند */}
+      {/* محفظه میانی */}
       <div className="relative z-10 flex items-center justify-center my-auto w-full max-w-full gap-3 sm:gap-6 md:gap-8 lg:gap-12 px-2 min-h-0">
         
-        {/* دکمه سمت راست: صفحه بعدی */}
+        {/* دکمه سمت راست: بعدی */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -270,7 +280,7 @@ export default function CatalogViewer() {
             isAtEnd ? "opacity-30 cursor-not-allowed hover:scale-100 hover:bg-white/85 hover:text-stone-800" : "cursor-pointer"
           }`}
         >
-          <ChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" />
+          <ChevronRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-0.5" />
         </button>
 
         {/* کادر کتاب */}
@@ -419,7 +429,7 @@ export default function CatalogViewer() {
           </div>
         </div>
 
-        {/* دکمه سمت چپ: صفحه قبلی */}
+        {/* دکمه سمت چپ: قبلی */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -431,11 +441,11 @@ export default function CatalogViewer() {
             isAtStart ? "opacity-30 cursor-not-allowed hover:scale-100 hover:bg-white/85 hover:text-stone-800" : "cursor-pointer"
           }`}
         >
-          <ChevronLeft className="w-5 h-5 transition-transform duration-300 group-hover:-translate-x-0.5" />
+          <ChevronLeft className="w-6 h-6 transition-transform duration-300 group-hover:-translate-x-0.5" />
         </button>
       </div>
 
-      {/* نوار ناوبری پایین با خاصیت shrink-0 (تضمین نمایش همیشگی بدون خروج از صفحه) */}
+      {/* نوار ناوبری پایین */}
       <nav
         onClick={(e) => e.stopPropagation()}
         className="relative z-10 flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-white/60 shadow-lg shrink-0 cursor-default"
@@ -513,11 +523,14 @@ export default function CatalogViewer() {
       {/* مدال پیش‌نمایش صفحات */}
       {showOverview && (
         <div
-          onClick={(e) => e.stopPropagation()}
-          className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 bg-stone-950/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setShowOverview(false)}
+          className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 bg-stone-950/85 backdrop-blur-md animate-in fade-in duration-200 cursor-pointer"
           dir="rtl"
         >
-          <div className="relative w-full max-w-4xl max-h-[85vh] bg-[#FAF8F3] rounded-2xl shadow-2xl border border-stone-200/80 flex flex-col overflow-hidden">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-4xl max-h-[85vh] bg-[#FAF8F3] rounded-2xl shadow-2xl border border-stone-200/80 flex flex-col overflow-hidden cursor-default"
+          >
             <div className="flex items-center justify-between px-5 py-3 border-b border-stone-200/80 bg-white/70">
               <div className="flex items-center gap-2">
                 <LayoutGrid className="w-4 h-4 text-amber-800" />
